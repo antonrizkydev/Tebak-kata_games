@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Permainan Tebak Kata - Pilih Tingkat Kesulitan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+  body {
+    background: #121212;
+    color: #f0f0f0;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    min-height: 100vh;
+    padding: 2rem 0;
+  }
+  .game-container {
+    background: #1f1f1f;
+    padding: 2rem 2rem 3rem 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 15px #6c63ffaa;
+    width: 340px;
+    text-align: center;
+  }
+  h1 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #6c63ff;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: left;
+  }
+  select {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+    background: #333;
+    color: #f0f0f0;
+    user-select: none;
+  }
+  select:focus {
+    outline: none;
+    box-shadow: 0 0 5px #6c63ff;
+  }
+  .word-display {
+    font-size: 2rem;
+    letter-spacing: 0.3rem;
+    margin-bottom: 1rem;
+    min-height: 40px;
+  }
+  .clue {
+    font-size: 1rem;
+    font-style: italic;
+    margin-bottom: 1rem;
+    color: #cdc;
+    min-height: 30px;
+  }
+  .letters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+  }
+  button.letter-btn {
+    background: #333;
+    color: #f0f0f0;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.7rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    width: 36px;
+    user-select: none;
+  }
+  button.letter-btn:hover:not(:disabled) {
+    background: #6c63ff;
+  }
+  button.letter-btn:disabled {
+    background: #555;
+    cursor: default;
+  }
+  .info {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    min-height: 20px;
+  }
+  .message {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    min-height: 1.5rem;
+    color: #ff6b6b;
+  }
+  button#restart-btn {
+    background: #6c63ff;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.6rem;
+    padding: 0.7rem 1.6rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 0.5rem;
+  }
+  button#restart-btn:hover {
+    background: #5549cc;
+  }
+  footer {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: #999;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+  <div class="game-container" role="main" aria-label="Permainan Tebak Kata">
+    <h1>Permainan Tebak Kata</h1>
+    <label for="difficulty-select">Pilih Tingkat Kesulitan:</label>
+    <select id="difficulty-select" aria-describedby="difficultyHelp" aria-label="Pilih tingkat kesulitan permainan">
+      <option value="mudah" selected>Mudah</option>
+      <option value="sedang">Sedang</option>
+      <option value="sulit">Sulit</option>
+    </select>
+    <div class="clue" id="clue" role="region" aria-live="polite"></div>
+    <div class="word-display" id="wordDisplay" aria-live="polite" aria-label="Kata yang ditebak">_ _ _ _ _</div>
+    <div class="letters" id="lettersContainer" role="region" aria-label="Pilihan huruf"></div>
+    <div class="info" id="attemptsInfo" aria-live="polite">Percobaan tersisa: 7</div>
+    <div class="message" id="message" aria-live="polite"></div>
+    <button id="restart-btn" aria-label="Mulai ulang permainan">Mulai Ulang</button>
+    <footer>© Tebak Kata - Johanton</footer>
+  </div>
+
+  <script>
+    (() => {
+      // Word lists grouped by difficulty for easier to harder general knowledge
+      const wordsByDifficulty = {
+        mudah: [
+          { word: 'bulan', clue: 'Cahaya terang di malam hari.' },
+          { word: 'matahari', clue: 'Bintang di siang hari.' },
+          { word: 'merah', clue: 'Warna bendera Indonesia bagian atas.' },
+          { word: 'padi', clue: 'Tanaman yang menjadi nasi.' },
+          { word: 'gunung', clue: 'Bukit yang besar dan tinggi.' },
+          { word: 'laut', clue: 'Tempat air asin yang luas.' }
+        ],
+        sedang: [
+          { word: 'kapal', clue: 'Alat transportasi di laut.' },
+          { word: 'pulau', clue: 'Daratan kecil di tengah laut.' },
+          { word: 'guru', clue: 'Orang yang mengajar di sekolah.' },
+          { word: 'rumah', clue: 'Tempat kita tinggal.' },
+          { word: 'istri', clue: 'Pasangan perempuan dalam keluarga.' },
+          { word: 'hutan', clue: 'Tempat tumbuh banyak pohon.' }
+        ],
+        sulit: [
+          { word: 'presiden', clue: 'Pemimpin tertinggi sebuah negara.' },
+          { word: 'pariwisata', clue: 'Industri yang berkaitan dengan wisata.' },
+          { word: 'arsitektur', clue: 'Seni merancang bangunan.' },
+          { word: 'ekosistem', clue: 'Hubungan makhluk hidup dengan lingkungannya.' },
+          { word: 'meteorologi', clue: 'Ilmu yang mempelajari cuaca.' },
+          { word: 'geografi', clue: 'Ilmu tentang bumi dan letak-letaknya.' }
+        ]
+      };
+
+      const maxAttempts = 7;
+      let selectedWord = '';
+      let selectedClue = '';
+      let guessedLetters = new Set();
+      let attemptsLeft = maxAttempts;
+
+      const wordDisplay = document.getElementById('wordDisplay');
+      const lettersContainer = document.getElementById('lettersContainer');
+      const attemptsInfo = document.getElementById('attemptsInfo');
+      const message = document.getElementById('message');
+      const clueEl = document.getElementById('clue');
+      const restartBtn = document.getElementById('restart-btn');
+      const difficultySelect = document.getElementById('difficulty-select');
+
+      function selectRandomWord(difficulty) {
+        const list = wordsByDifficulty[difficulty];
+        const idx = Math.floor(Math.random() * list.length);
+        return list[idx];
+      }
+
+      function updateWordDisplay() {
+        let display = '';
+        for (const ch of selectedWord) {
+          if (guessedLetters.has(ch)) {
+            display += ch + ' ';
+          } else {
+            display += '_ ';
+          }
+        }
+        wordDisplay.textContent = display.trim();
+      }
+
+      function createLetterButtons() {
+        lettersContainer.innerHTML = '';
+        const alphabets = 'abcdefghijklmnopqrstuvwxyz'.split('');
+        alphabets.forEach(letter => {
+          const btn = document.createElement('button');
+          btn.textContent = letter;
+          btn.className = 'letter-btn';
+          btn.disabled = false;
+          btn.addEventListener('click', () => letterClicked(letter, btn));
+          lettersContainer.appendChild(btn);
+        });
+      }
+
+      function letterClicked(letter, btn) {
+        if (guessedLetters.has(letter)) return;
+
+        guessedLetters.add(letter);
+        btn.disabled = true;
+
+        if (selectedWord.includes(letter)) {
+          updateWordDisplay();
+          if (checkWin()) {
+            message.style.color = '#4caf50';
+            message.textContent = '🎉 Selamat! Kamu menang!';
+            disableAllButtons();
+          } else {
+            message.textContent = '';
+          }
+        } else {
+          attemptsLeft--;
+          attemptsInfo.textContent = `Percobaan tersisa: ${attemptsLeft}`;
+          message.style.color = '#ff6b6b';
+          message.textContent = `Huruf "${letter.toUpperCase()}" tidak ada!`;
+
+          if (attemptsLeft === 0) {
+            message.style.color = '#ff6b6b';
+            message.textContent = `Game over! Kata yang benar: "${selectedWord.toUpperCase()}"`;
+            revealWord();
+            disableAllButtons();
+          }
+        }
+      }
+
+      function checkWin() {
+        for (const ch of selectedWord) {
+          if (!guessedLetters.has(ch)) return false;
+        }
+        return true;
+      }
+
+      function disableAllButtons() {
+        const buttons = lettersContainer.querySelectorAll('button');
+        buttons.forEach(btn => btn.disabled = true);
+      }
+
+      function revealWord() {
+        let reveal = '';
+        for (const ch of selectedWord) {
+          reveal += ch + ' ';
+        }
+        wordDisplay.textContent = reveal.trim();
+      }
+
+      function resetGame() {
+        const difficulty = difficultySelect.value;
+        const choice = selectRandomWord(difficulty);
+        selectedWord = choice.word;
+        selectedClue = choice.clue;
+        guessedLetters.clear();
+        attemptsLeft = maxAttempts;
+        attemptsInfo.textContent = `Percobaan tersisa: ${attemptsLeft}`;
+        message.textContent = '';
+        message.style.color = '#ff6b6b';
+        clueEl.textContent = 'Petunjuk: ' + selectedClue;
+        updateWordDisplay();
+        createLetterButtons();
+      }
+
+      restartBtn.addEventListener('click', resetGame);
+
+      // Initialize game on load
+      resetGame();
+
+      // Change game when difficulty changes
+      difficultySelect.addEventListener('change', resetGame);
+    })();
+  </script>
+</body>
+</html>
+
